@@ -136,6 +136,7 @@ func (c *Controller) NewLineCharacterEscape(w http.ResponseWriter, r *http.Reque
 
 	if len(input) <= 0 {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	response["HasNewLineCharacterEscape"] = validation.NewNewLineCharacterEscape().CheckForNewLineCharacter(input)
@@ -153,7 +154,29 @@ func (c *Controller) NewLineCharacterEscape(w http.ResponseWriter, r *http.Reque
 }
 
 func (c *Controller) PathAlterationEscape(w http.ResponseWriter, r *http.Request) {
+	response := map[string]bool{
+		"IsValidPath": false,
+	}
 
+	input := r.URL.Query().Get("input")
+
+	if len(input) < 0 {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	response["IsValidPath"] = validation.NewPathAlterationEscape().IsValidPath(input)
+
+	jsonResponse, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	w.Write(jsonResponse)
 }
 
 func (c *Controller) CheckForExtendedUTF8Encoding(w http.ResponseWriter, r *http.Request) {
