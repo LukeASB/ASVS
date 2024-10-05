@@ -27,6 +27,10 @@ func NewController() *Controller {
 func (c *Controller) Whitelist(w http.ResponseWriter, r *http.Request) {
 	input := r.URL.Query().Get("input")
 
+	if len(input) <= 0 {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
 	valid := validation.NewWhiteList().Check(input)
 
 	if valid {
@@ -40,6 +44,11 @@ func (c *Controller) Whitelist(w http.ResponseWriter, r *http.Request) {
 func (c *Controller) BoundaryCheck(w http.ResponseWriter, r *http.Request) {
 	inputNum1 := r.URL.Query().Get("num1")
 	inputNum2 := r.URL.Query().Get("num2")
+
+	if len(inputNum1) <= 0 || len(inputNum2) <= 0 {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 
 	num1, err := validation.NewBoundaryCheck().Validate(inputNum1)
 
@@ -73,6 +82,11 @@ func (c *Controller) NumericValidation(w http.ResponseWriter, r *http.Request) {
 
 	input := r.URL.Query().Get("value")
 
+	if len(input) <= 0 {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
 	response["IsNumber"] = validation.NewNumericValidation().IsNumber(input)
 
 	jsonResponse, err := json.Marshal(response)
@@ -94,6 +108,11 @@ func (c *Controller) CheckForNullBytes(w http.ResponseWriter, r *http.Request) {
 
 	input := r.URL.Query().Get("text")
 
+	if len(input) <= 0 {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
 	response["HasNullByte"] = validation.NewCheckForNullBytes().ContainsNullBytes(input)
 
 	jsonResponse, err := json.Marshal(response)
@@ -109,7 +128,28 @@ func (c *Controller) CheckForNullBytes(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) NewLineCharacterEscape(w http.ResponseWriter, r *http.Request) {
+	response := map[string]bool{
+		"HasNewLineCharacterEscape": false,
+	}
 
+	input := r.URL.Query().Get("text")
+
+	if len(input) <= 0 {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	response["HasNewLineCharacterEscape"] = validation.NewNewLineCharacterEscape().CheckForNewLineCharacter(input)
+
+	jsonResponse, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	w.Write(jsonResponse)
 }
 
 func (c *Controller) PathAlterationEscape(w http.ResponseWriter, r *http.Request) {
