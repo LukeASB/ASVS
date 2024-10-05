@@ -11,6 +11,12 @@ type Controller struct{}
 type IController interface {
 	Whitelist(w http.ResponseWriter, r *http.Request)
 	BoundaryCheck(w http.ResponseWriter, r *http.Request)
+	CharacterEscape(w http.ResponseWriter, r *http.Request)
+	NumericValidation(w http.ResponseWriter, r *http.Request)
+	CheckForNullBytes(w http.ResponseWriter, r *http.Request)
+	NewLineCharacterEscape(w http.ResponseWriter, r *http.Request)
+	PathAlterationEscape(w http.ResponseWriter, r *http.Request)
+	CheckForExtendedUTF8Encoding(w http.ResponseWriter, r *http.Request)
 }
 
 func NewController() *Controller {
@@ -49,4 +55,32 @@ func (c *Controller) BoundaryCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte(fmt.Sprintf("%d + %d = %d", num1, num2, num1+num2)))
+}
+
+func (c *Controller) CharacterEscape(w http.ResponseWriter, r *http.Request) {
+	input := r.URL.Query().Get("text")
+
+	sanitisedText := validation.NewCharacterEscape().EscapeHTML(input)
+
+	w.Write([]byte(sanitisedText))
+}
+
+func (c *Controller) NumericValidation(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (c *Controller) CheckForNullBytes(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (c *Controller) NewLineCharacterEscape(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (c *Controller) PathAlterationEscape(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (c *Controller) CheckForExtendedUTF8Encoding(w http.ResponseWriter, r *http.Request) {
+
 }

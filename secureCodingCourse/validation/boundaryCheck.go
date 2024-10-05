@@ -7,10 +7,6 @@ import (
 
 type BoundaryCheck struct{}
 
-type IBoundaryCheck interface {
-	Validate(val string) (int, error)
-}
-
 func NewBoundaryCheck() *BoundaryCheck {
 	return &BoundaryCheck{}
 }
