@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"secureCodingCourse/validation"
@@ -66,7 +67,24 @@ func (c *Controller) CharacterEscape(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) NumericValidation(w http.ResponseWriter, r *http.Request) {
+	jsonResponse := map[string]bool{
+		"IsNumber": false,
+	}
 
+	input := r.URL.Query().Get("value")
+
+	jsonResponse["IsNumber"] = validation.NewNumericValidation().IsNumber(input)
+
+	response, err := json.Marshal(jsonResponse)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	w.Write(response)
 }
 
 func (c *Controller) CheckForNullBytes(w http.ResponseWriter, r *http.Request) {
