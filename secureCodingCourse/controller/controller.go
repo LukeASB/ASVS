@@ -67,15 +67,15 @@ func (c *Controller) CharacterEscape(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) NumericValidation(w http.ResponseWriter, r *http.Request) {
-	jsonResponse := map[string]bool{
+	response := map[string]bool{
 		"IsNumber": false,
 	}
 
 	input := r.URL.Query().Get("value")
 
-	jsonResponse["IsNumber"] = validation.NewNumericValidation().IsNumber(input)
+	response["IsNumber"] = validation.NewNumericValidation().IsNumber(input)
 
-	response, err := json.Marshal(jsonResponse)
+	jsonResponse, err := json.Marshal(response)
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -84,11 +84,28 @@ func (c *Controller) NumericValidation(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	w.Write(response)
+	w.Write(jsonResponse)
 }
 
 func (c *Controller) CheckForNullBytes(w http.ResponseWriter, r *http.Request) {
+	response := map[string]bool{
+		"HasNullByte": false,
+	}
 
+	input := r.URL.Query().Get("text")
+
+	response["HasNullByte"] = validation.NewCheckForNullBytes().ContainsNullBytes(input)
+
+	jsonResponse, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	w.Write(jsonResponse)
 }
 
 func (c *Controller) NewLineCharacterEscape(w http.ResponseWriter, r *http.Request) {
