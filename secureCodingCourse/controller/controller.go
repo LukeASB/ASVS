@@ -160,7 +160,7 @@ func (c *Controller) PathAlterationEscape(w http.ResponseWriter, r *http.Request
 
 	input := r.URL.Query().Get("input")
 
-	if len(input) < 0 {
+	if len(input) <= 0 {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -180,5 +180,27 @@ func (c *Controller) PathAlterationEscape(w http.ResponseWriter, r *http.Request
 }
 
 func (c *Controller) CheckForExtendedUTF8Encoding(w http.ResponseWriter, r *http.Request) {
+	response := map[string]bool{
+		"IsValidUTF8": false,
+	}
 
+	input := r.URL.Query().Get("input")
+
+	if len(input) <= 0 {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	response["IsValidUTF8"] = validation.NewCheckForExtendedUTF8Encoding().IsValidUTF8(input)
+
+	jsonResponse, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	w.Write(jsonResponse)
 }
