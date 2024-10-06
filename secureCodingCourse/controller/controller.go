@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"secureCodingCourse/validation"
 )
@@ -18,6 +19,8 @@ type IController interface {
 	NewLineCharacterEscape(w http.ResponseWriter, r *http.Request)
 	PathAlterationEscape(w http.ResponseWriter, r *http.Request)
 	CheckForExtendedUTF8Encoding(w http.ResponseWriter, r *http.Request)
+	UnsecureCrossSiteScriptingExample(w http.ResponseWriter, r *http.Request)
+	SecureCrossSiteScriptingExample(w http.ResponseWriter, r *http.Request)
 }
 
 func NewController() *Controller {
@@ -203,4 +206,38 @@ func (c *Controller) CheckForExtendedUTF8Encoding(w http.ResponseWriter, r *http
 	w.Header().Set("Content-Type", "application/json")
 
 	w.Write(jsonResponse)
+}
+
+func (c *Controller) UnsecureCrossSiteScriptingExample(w http.ResponseWriter, r *http.Request) {
+	input := r.URL.Query().Get("input")
+
+	if len(input) <= 0 {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte(fmt.Sprintf("<h1>Hi Cross Site Scripting Example! %s </h1>", input)))
+}
+
+func (c *Controller) SecureCrossSiteScriptingExample(w http.ResponseWriter, r *http.Request) {
+	input := r.URL.Query().Get("input")
+
+	if len(input) <= 0 {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, err := template.New("output").Parse("<h1>Hello, {{ . }}!</h1>")
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, input)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }

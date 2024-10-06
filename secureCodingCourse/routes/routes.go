@@ -37,4 +37,12 @@ func SetUpRoutes(c controller.IController) {
 	http.HandleFunc("/checkforextendedutf8encoding", func(w http.ResponseWriter, r *http.Request) {
 		c.CheckForExtendedUTF8Encoding(w, r)
 	})
+
+	http.HandleFunc("/unsecurecrosssitescriptingexample", func(w http.ResponseWriter, r *http.Request) {
+		c.UnsecureCrossSiteScriptingExample(w, r)
+	})
+
+	http.HandleFunc("/securecrosssitescriptingexample", func(w http.ResponseWriter, r *http.Request) {
+		c.SecureCrossSiteScriptingExample(w, r)
+	})
 }
