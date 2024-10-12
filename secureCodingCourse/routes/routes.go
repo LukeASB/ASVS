@@ -3,9 +3,10 @@ package routes
 import (
 	"net/http"
 	"secureCodingCourse/controller"
+	"secureCodingCourse/db"
 )
 
-func SetUpRoutes(c controller.IController) {
+func SetUpRoutes(c controller.IController, db db.IDB) {
 	http.HandleFunc("/whitelist", func(w http.ResponseWriter, r *http.Request) {
 		c.Whitelist(w, r)
 	})
@@ -44,5 +45,13 @@ func SetUpRoutes(c controller.IController) {
 
 	http.HandleFunc("/securecrosssitescriptingexample", func(w http.ResponseWriter, r *http.Request) {
 		c.SecureCrossSiteScriptingExample(w, r)
+	})
+
+	http.HandleFunc("/sqlinjection", func(w http.ResponseWriter, r *http.Request) {
+		c.SQLInjection(w, r, db)
+	})
+
+	http.HandleFunc("/safesqlsearch", func(w http.ResponseWriter, r *http.Request) {
+		c.SafeSQLSearchExample(w, r, db)
 	})
 }

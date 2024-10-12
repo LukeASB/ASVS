@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"secureCodingCourse/data"
+	"secureCodingCourse/db"
 	"secureCodingCourse/validation"
+
+	_ "github.com/denisenkom/go-mssqldb" // MS SQL driver
 )
 
 type Controller struct{}
@@ -21,6 +25,8 @@ type IController interface {
 	CheckForExtendedUTF8Encoding(w http.ResponseWriter, r *http.Request)
 	UnsecureCrossSiteScriptingExample(w http.ResponseWriter, r *http.Request)
 	SecureCrossSiteScriptingExample(w http.ResponseWriter, r *http.Request)
+	SQLInjection(w http.ResponseWriter, r *http.Request, db db.IDB)
+	SafeSQLSearchExample(w http.ResponseWriter, r *http.Request, db db.IDB)
 }
 
 func NewController() *Controller {
@@ -240,4 +246,76 @@ func (c *Controller) SecureCrossSiteScriptingExample(w http.ResponseWriter, r *h
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
+}
+
+func (c *Controller) SQLInjection(w http.ResponseWriter, r *http.Request, db db.IDB) {
+	input := r.URL.Query().Get("input")
+
+	if len(input) <= 0 {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	results, err := db.UnsafeRetrieve(input)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	results, ok := results.([]data.Patient)
+
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("Patients data:")
+
+	jsonData, err := json.Marshal(results)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	w.Write(jsonData)
+}
+
+func (c *Controller) SafeSQLSearchExample(w http.ResponseWriter, r *http.Request, db db.IDB) {
+	input := r.URL.Query().Get("input")
+
+	if len(input) <= 0 {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	results, err := db.SafeRetrieve(input)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	results, ok := results.([]data.Patient)
+
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("Patients data:")
+
+	jsonData, err := json.Marshal(results)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	w.Write(jsonData)
 }
