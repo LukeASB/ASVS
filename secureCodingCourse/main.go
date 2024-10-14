@@ -11,22 +11,28 @@ import (
 )
 
 func main() {
+	var databases = make(map[string]db.IDB)
+
 	c := controller.NewController()
-	db, err := db.NewDB()
+	globomanticsDB, err := db.NewDB("Globomantics")
 
 	if err != nil {
 		log.Fatal("💣")
 	}
 
-	defer cleanup(db)
+	databases["Globomantics"] = globomanticsDB
 
-	routes.SetUpRoutes(c, db)
+	defer cleanup(databases)
+
+	routes.SetUpRoutes(c, databases)
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal("💣")
 	}
 }
 
-func cleanup(db db.IDB) {
-	db.Close()
+func cleanup(db map[string]db.IDB) {
+	for _, val := range db {
+		val.Close()
+	}
 }

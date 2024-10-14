@@ -7,3 +7,9 @@ type Patient struct {
 	Age     int
 	Gender  string
 }
+
+type User struct {
+	Id       int
+	UserName string `json:"username`
+	Password string `json:"password"`
+}

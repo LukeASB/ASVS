@@ -10,6 +10,7 @@ import (
 	"secureCodingCourse/validation"
 
 	_ "github.com/denisenkom/go-mssqldb" // MS SQL driver
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Controller struct{}
@@ -25,8 +26,9 @@ type IController interface {
 	CheckForExtendedUTF8Encoding(w http.ResponseWriter, r *http.Request)
 	UnsecureCrossSiteScriptingExample(w http.ResponseWriter, r *http.Request)
 	SecureCrossSiteScriptingExample(w http.ResponseWriter, r *http.Request)
-	SQLInjection(w http.ResponseWriter, r *http.Request, db db.IDB)
-	SafeSQLSearchExample(w http.ResponseWriter, r *http.Request, db db.IDB)
+	SQLInjection(w http.ResponseWriter, r *http.Request, db map[string]db.IDB)
+	SafeSQLSearchExample(w http.ResponseWriter, r *http.Request, db map[string]db.IDB)
+	LoginUserSingleFactor(w http.ResponseWriter, r *http.Request, db map[string]db.IDB)
 }
 
 func NewController() *Controller {
@@ -248,7 +250,7 @@ func (c *Controller) SecureCrossSiteScriptingExample(w http.ResponseWriter, r *h
 	}
 }
 
-func (c *Controller) SQLInjection(w http.ResponseWriter, r *http.Request, db db.IDB) {
+func (c *Controller) SQLInjection(w http.ResponseWriter, r *http.Request, db map[string]db.IDB) {
 	input := r.URL.Query().Get("input")
 
 	if len(input) <= 0 {
@@ -256,7 +258,7 @@ func (c *Controller) SQLInjection(w http.ResponseWriter, r *http.Request, db db.
 		return
 	}
 
-	results, err := db.UnsafeRetrieve(input)
+	results, err := db["Globomantics"].UnsafeRetrievePatients(input)
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -284,7 +286,7 @@ func (c *Controller) SQLInjection(w http.ResponseWriter, r *http.Request, db db.
 	w.Write(jsonData)
 }
 
-func (c *Controller) SafeSQLSearchExample(w http.ResponseWriter, r *http.Request, db db.IDB) {
+func (c *Controller) SafeSQLSearchExample(w http.ResponseWriter, r *http.Request, db map[string]db.IDB) {
 	input := r.URL.Query().Get("input")
 
 	if len(input) <= 0 {
@@ -292,7 +294,7 @@ func (c *Controller) SafeSQLSearchExample(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	results, err := db.SafeRetrieve(input)
+	results, err := db["Globomantics"].SafeRetrievePatients(input)
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -309,6 +311,57 @@ func (c *Controller) SafeSQLSearchExample(w http.ResponseWriter, r *http.Request
 	fmt.Println("Patients data:")
 
 	jsonData, err := json.Marshal(results)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	w.Write(jsonData)
+}
+
+func (c *Controller) LoginUserSingleFactor(w http.ResponseWriter, r *http.Request, db map[string]db.IDB) {
+	if r.Method != http.MethodPost {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	user := data.User{}
+
+	err := json.NewDecoder(r.Body).Decode(&user)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+	}
+
+	results, err := db["Globomantics"].RetrieveUsers(user.UserName)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	userData, ok := results.([]data.User)
+
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(userData[0].Password), []byte(user.Password))
+
+	response := map[string]bool{}
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	} else {
+		response["Success"] = true
+	}
+
+	fmt.Println("User data:")
+
+	jsonData, err := json.Marshal(response)
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

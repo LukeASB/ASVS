@@ -6,7 +6,7 @@ import (
 	"secureCodingCourse/db"
 )
 
-func SetUpRoutes(c controller.IController, db db.IDB) {
+func SetUpRoutes(c controller.IController, db map[string]db.IDB) {
 	http.HandleFunc("/whitelist", func(w http.ResponseWriter, r *http.Request) {
 		c.Whitelist(w, r)
 	})
@@ -53,5 +53,9 @@ func SetUpRoutes(c controller.IController, db db.IDB) {
 
 	http.HandleFunc("/safesqlsearch", func(w http.ResponseWriter, r *http.Request) {
 		c.SafeSQLSearchExample(w, r, db)
+	})
+
+	http.HandleFunc("/singlefactorlogin", func(w http.ResponseWriter, r *http.Request) {
+		c.LoginUserSingleFactor(w, r, db)
 	})
 }

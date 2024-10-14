@@ -13,13 +13,14 @@ type DB struct {
 }
 
 type IDB interface {
-	UnsafeRetrieve(input any) (any, error)
-	SafeRetrieve(input any) (any, error)
+	UnsafeRetrievePatients(input any) (any, error)
+	SafeRetrievePatients(input any) (any, error)
+	RetrieveUsers(input any) (any, error)
 	Close()
 }
 
-func NewDB() (*DB, error) {
-	database, err := Connect()
+func NewDB(table string) (*DB, error) {
+	database, err := Connect(table)
 
 	if err != nil {
 		return nil, err
@@ -28,9 +29,9 @@ func NewDB() (*DB, error) {
 	return &DB{database: database}, nil
 }
 
-func Connect() (*sql.DB, error) {
+func Connect(table string) (*sql.DB, error) {
 	// Connection string for SQL Server
-	connString := "sqlserver://localhost:1433?database=Globomantics&trusted_connection=true"
+	connString := fmt.Sprintf("sqlserver://localhost:1433?database=%s&trusted_connection=true", table)
 	var err error
 	// Open the connection
 	database, err := sql.Open("sqlserver", connString)
@@ -48,10 +49,9 @@ func Connect() (*sql.DB, error) {
 	fmt.Println("Connected to SQL Server!")
 
 	return database, nil
-
 }
 
-func (db *DB) UnsafeRetrieve(input any) (any, error) {
+func (db *DB) UnsafeRetrievePatients(input any) (any, error) {
 	rows, err := db.database.Query(fmt.Sprintf("SELECT [id], [name], [surname], [age], [gender] FROM [dbo].[Patients] WHERE age = %s", input))
 
 	if err != nil {
@@ -86,7 +86,7 @@ func (db *DB) UnsafeRetrieve(input any) (any, error) {
 	return results, nil
 }
 
-func (db *DB) SafeRetrieve(input any) (any, error) {
+func (db *DB) SafeRetrievePatients(input any) (any, error) {
 	stmt, err := db.database.Prepare("SELECT [id], [name], [surname], [age], [gender] FROM [dbo].[Patients] WHERE age = @p1")
 
 	if err != nil {
@@ -120,6 +120,50 @@ func (db *DB) SafeRetrieve(input any) (any, error) {
 		// Print each row
 		fmt.Printf("ID: %d, Name: %s %s, Age: %d, Gender: %s\n", p.Id, p.Name, p.Surname, p.Age, p.Gender)
 		results = append(results, p)
+	}
+
+	// Check for any errors during iteration
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (db *DB) RetrieveUsers(input any) (any, error) {
+	stmt, err := db.database.Prepare("SELECT * FROM [dbo].[Users] WHERE username = @p1")
+
+	if err != nil {
+		fmt.Println("Error scanning row: ", err)
+		return nil, fmt.Errorf("error scanning row: %s", err)
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(input)
+
+	if err != nil {
+		fmt.Println("Fail: ", err)
+		return nil, fmt.Errorf("%s", err)
+	}
+
+	defer rows.Close()
+
+	var results []data.User
+
+	for rows.Next() {
+		var u data.User
+
+		// Scan the row values into variables
+		err := rows.Scan(&u.Id, &u.UserName, &u.Password)
+		if err != nil {
+			fmt.Println("Error scanning row: ", err)
+			return nil, fmt.Errorf("error scanning row: %s", err)
+		}
+
+		// Print each row
+		fmt.Printf("ID: %d, Username: %s, Password: %s\n", u.Id, u.UserName, u.Password)
+		results = append(results, u)
 	}
 
 	// Check for any errors during iteration
