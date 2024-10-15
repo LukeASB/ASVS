@@ -13,3 +13,9 @@ type User struct {
 	UserName string `json:"username`
 	Password string `json:"password"`
 }
+
+type TemplateData struct {
+	Username    string
+	QRCodeImage string
+	SecretKey   string
+}
