@@ -15,6 +15,7 @@ func main() {
 
 	c := controller.NewController()
 	mFDc := controller.NewMultiFactorDemoController()
+	cDC := controller.NewControllerCookieDemo()
 	globomanticsDB, err := db.NewDB("Globomantics")
 
 	if err != nil {
@@ -28,6 +29,7 @@ func main() {
 	routes.SetUpValidationRoutes(c, databases)
 	routes.SetUpSingleFactorAuthRoutes(c, databases)
 	routes.SetUpMultiFactorAuthRoutesDemo(mFDc, databases)
+	routes.SetUpCookieDemoRoutes(cDC)
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
