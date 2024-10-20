@@ -14,8 +14,8 @@ func main() {
 	var databases = make(map[string]db.IDB)
 
 	c := controller.NewController()
-	mFDc := controller.NewMultiFactorDemoController()
-	cDC := controller.NewControllerCookieDemo()
+	// mFDc := controller.NewMultiFactorDemoController()
+	// cDC := controller.NewControllerCookieDemo()
 	globomanticsDB, err := db.NewDB("Globomantics")
 
 	if err != nil {
@@ -26,10 +26,11 @@ func main() {
 
 	defer cleanup(databases)
 
-	routes.SetUpValidationRoutes(c, databases)
-	routes.SetUpSingleFactorAuthRoutes(c, databases)
-	routes.SetUpMultiFactorAuthRoutesDemo(mFDc, databases)
-	routes.SetUpCookieDemoRoutes(cDC)
+	routes.Routes(c)
+	// routes.SetUpValidationRoutes(c, databases)
+	// routes.SetUpSingleFactorAuthRoutes(c, databases)
+	// routes.SetUpMultiFactorAuthRoutesDemo(mFDc, databases)
+	// routes.SetUpCookieDemoRoutes(cDC)
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)

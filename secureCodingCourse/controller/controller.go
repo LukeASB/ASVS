@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"crypto/md5"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -11,6 +13,7 @@ import (
 
 	_ "github.com/denisenkom/go-mssqldb" // MS SQL driver
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/blake2s"
 )
 
 type Controller struct{}
@@ -29,6 +32,7 @@ type IController interface {
 	SQLInjection(w http.ResponseWriter, r *http.Request, db map[string]db.IDB)
 	SafeSQLSearchExample(w http.ResponseWriter, r *http.Request, db map[string]db.IDB)
 	LoginUserSingleFactor(w http.ResponseWriter, r *http.Request, db map[string]db.IDB)
+	HashDemo(w http.ResponseWriter, r *http.Request)
 }
 
 func NewController() *Controller {
@@ -371,4 +375,37 @@ func (c *Controller) LoginUserSingleFactor(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 
 	w.Write(jsonData)
+}
+
+func (c *Controller) HashDemo(w http.ResponseWriter, r *http.Request) {
+	input := r.URL.Query().Get("input")
+
+	if len(input) <= 0 {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	md5 := md5.New()
+	sha256Hash := sha256.New()
+	blake2s, err := blake2s.New256(nil)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]string{
+		"MD5":         fmt.Sprintf("%x", md5.Sum(nil)),
+		"SHA256":      fmt.Sprintf("%x", sha256Hash.Sum(nil)),
+		"Blake2s-256": fmt.Sprintf("%x", blake2s.Sum(nil)),
+	}
+
+	jsonResponse, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(jsonResponse)
 }
