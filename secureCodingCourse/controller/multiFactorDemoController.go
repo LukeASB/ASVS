@@ -8,7 +8,7 @@ import (
 	"image/png"
 	"log"
 	"net/http"
-	"secureCodingCourse/data"
+	"secureCodingCourse/helper"
 	"time"
 
 	"github.com/pquerna/otp/totp"
@@ -70,7 +70,7 @@ func (c *MultiFactorDemoController) LoginHandler(w http.ResponseWriter, r *http.
 			qrCodeImage := base64.StdEncoding.EncodeToString(buf.Bytes())
 
 			// Prepare the data for the template
-			data := data.TemplateData{
+			data := helper.TemplateData{
 				Username:    username,
 				QRCodeImage: qrCodeImage,
 				SecretKey:   secretKey,
@@ -87,7 +87,7 @@ func (c *MultiFactorDemoController) LoginHandler(w http.ResponseWriter, r *http.
 			}
 		} else {
 			// User already has a secret key, display the verification form directly
-			data := data.TemplateData{
+			data := helper.TemplateData{
 				Username:  username,
 				SecretKey: secretKey,
 			}

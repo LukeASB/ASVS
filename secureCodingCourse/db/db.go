@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"secureCodingCourse/data"
+	"secureCodingCourse/helper"
 
 	_ "github.com/denisenkom/go-mssqldb" // MS SQL driver
 )
@@ -61,10 +61,10 @@ func (db *DB) UnsafeRetrievePatients(input any) (any, error) {
 
 	defer rows.Close()
 
-	var results []data.Patient
+	var results []helper.Patient
 
 	for rows.Next() {
-		var p data.Patient
+		var p helper.Patient
 
 		// Scan the row values into variables
 		err := rows.Scan(&p.Id, &p.Name, &p.Surname, &p.Age, &p.Gender)
@@ -105,10 +105,10 @@ func (db *DB) SafeRetrievePatients(input any) (any, error) {
 
 	defer rows.Close()
 
-	var results []data.Patient
+	var results []helper.Patient
 
 	for rows.Next() {
-		var p data.Patient
+		var p helper.Patient
 
 		// Scan the row values into variables
 		err := rows.Scan(&p.Id, &p.Name, &p.Surname, &p.Age, &p.Gender)
@@ -149,10 +149,10 @@ func (db *DB) RetrieveUsers(input any) (any, error) {
 
 	defer rows.Close()
 
-	var results []data.User
+	var results []helper.User
 
 	for rows.Next() {
-		var u data.User
+		var u helper.User
 
 		// Scan the row values into variables
 		err := rows.Scan(&u.Id, &u.UserName, &u.Password)

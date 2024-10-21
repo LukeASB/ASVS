@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"secureCodingCourse/data"
 	"secureCodingCourse/db"
+	"secureCodingCourse/helper"
 	"secureCodingCourse/validation"
 
 	_ "github.com/denisenkom/go-mssqldb" // MS SQL driver
@@ -33,6 +33,7 @@ type IController interface {
 	SafeSQLSearchExample(w http.ResponseWriter, r *http.Request, db map[string]db.IDB)
 	LoginUserSingleFactor(w http.ResponseWriter, r *http.Request, db map[string]db.IDB)
 	HashDemo(w http.ResponseWriter, r *http.Request)
+	AESEncryptDecryptDemo(w http.ResponseWriter, r *http.Request)
 }
 
 func NewController() *Controller {
@@ -269,7 +270,7 @@ func (c *Controller) SQLInjection(w http.ResponseWriter, r *http.Request, db map
 		return
 	}
 
-	results, ok := results.([]data.Patient)
+	results, ok := results.([]helper.Patient)
 
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -305,7 +306,7 @@ func (c *Controller) SafeSQLSearchExample(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	results, ok := results.([]data.Patient)
+	results, ok := results.([]helper.Patient)
 
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -331,7 +332,7 @@ func (c *Controller) LoginUserSingleFactor(w http.ResponseWriter, r *http.Reques
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
-	user := data.User{}
+	user := helper.User{}
 
 	err := json.NewDecoder(r.Body).Decode(&user)
 
@@ -345,7 +346,7 @@ func (c *Controller) LoginUserSingleFactor(w http.ResponseWriter, r *http.Reques
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 
-	userData, ok := results.([]data.User)
+	userData, ok := results.([]helper.User)
 
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -398,6 +399,51 @@ func (c *Controller) HashDemo(w http.ResponseWriter, r *http.Request) {
 		"MD5":         fmt.Sprintf("%x", md5.Sum(nil)),
 		"SHA256":      fmt.Sprintf("%x", sha256Hash.Sum(nil)),
 		"Blake2s-256": fmt.Sprintf("%x", blake2s.Sum(nil)),
+	}
+
+	jsonResponse, err := json.Marshal(response)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(jsonResponse)
+}
+
+func (c *Controller) AESEncryptDecryptDemo(w http.ResponseWriter, r *http.Request) {
+	input := r.URL.Query().Get("input")
+
+	if len(input) <= 0 {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	secret, err := helper.Secret()
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	encryptUserInput, err := helper.Encrypt([]byte(input), secret)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	decryptedUserInput, err := helper.Decrypt(encryptUserInput, secret)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]any{
+		"Message":        string(input),
+		"EncryptedInput": encryptUserInput,
+		"DecryptedInput": string(decryptedUserInput),
 	}
 
 	jsonResponse, err := json.Marshal(response)

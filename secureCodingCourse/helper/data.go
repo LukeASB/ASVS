@@ -1,4 +1,4 @@
-package data
+package helper
 
 type Patient struct {
 	Id      int
